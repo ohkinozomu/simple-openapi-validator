@@ -12,6 +12,7 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
+	"sigs.k8s.io/yaml"
 )
 
 var (
@@ -37,27 +38,45 @@ func init() {
 	validateCmd.Flags().StringVarP(&fileName, "file", "f", "", "file name")
 }
 
-func detectVersion(file string) (Version, error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return UNKNOWN, err
-	}
-	defer f.Close()
+func detectVersion(target string) (Version, error) {
+	log.Println("Detecting version...")
+	v := gjson.Get(target, "openapi")
 
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		return UNKNOWN, err
+	if v.Str == "" {
+		return UNKNOWN, errors.New("invalid format")
 	}
-	v := gjson.Get(string(b), "openapi")
+
+	log.Println("version: " + v.Str)
 
 	s := strings.Split(v.Str, ".")
-
 	if s[0] == "3" && s[1] == "0" {
 		return V30, nil
 	} else if s[0] == "3" && s[1] == "1" {
 		return V31, nil
 	}
 	return UNKNOWN, nil
+}
+
+func readFromFile(fileName string) (string, error) {
+	f, err := os.Open(fileName)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
+
+func yamlToJSON(target string) (string, error) {
+	j, err := yaml.YAMLToJSON([]byte(target))
+	if err != nil {
+		return "", err
+	}
+	return string(j), nil
 }
 
 var validateCmd = &cobra.Command{
@@ -69,9 +88,19 @@ var validateCmd = &cobra.Command{
 			return errors.New("input --file")
 		}
 
-		version, err := detectVersion(fileName)
+		target, err := readFromFile(fileName)
 		if err != nil {
-			log.Fatalf("%#v", err)
+			log.Fatalf(err.Error())
+		}
+
+		target, err = yamlToJSON(target)
+		if err != nil {
+			log.Fatalf(err.Error())
+		}
+
+		version, err := detectVersion(target)
+		if err != nil {
+			log.Fatalf(err.Error())
 		}
 
 		var schema string
@@ -81,26 +110,21 @@ var validateCmd = &cobra.Command{
 		case V31:
 			schema = string(schemaV31)
 		default:
-			return errors.New("unknown version")
+			log.Fatal("unknown version")
 		}
 
 		sch, err := jsonschema.CompileString("", schema)
 		if err != nil {
-			log.Fatalf("%#v", err)
-		}
-
-		data, err := ioutil.ReadFile(fileName)
-		if err != nil {
-			log.Fatal(err)
+			log.Fatalf(err.Error())
 		}
 
 		var v interface{}
-		if err := json.Unmarshal(data, &v); err != nil {
+		if err := json.Unmarshal([]byte(target), &v); err != nil {
 			log.Fatal(err)
 		}
 
 		if err = sch.Validate(v); err != nil {
-			log.Fatalf("%#v", err)
+			log.Fatalf(err.Error())
 		}
 
 		log.Println("Validate OK!!")
