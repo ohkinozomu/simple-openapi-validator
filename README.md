@@ -1,5 +1,11 @@
 # simple-openapi-validator
 
+## Usage
+
+```sh
+$ simple-openapi-validator validate -f [file]
+```
+
 ## Motivation
 
 There are already great tools like https://github.com/IBM/openapi-validator and https://github.com/Redocly/openapi-cli, but I wanted a simple tool that only inspects for compliance with the spec.
