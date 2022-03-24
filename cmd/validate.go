@@ -16,8 +16,6 @@ import (
 )
 
 var (
-	dryRun bool
-
 	//go:embed schemas/v3.0.json
 	schemaV30 []byte
 

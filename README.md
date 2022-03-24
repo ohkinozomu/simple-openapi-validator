@@ -4,6 +4,10 @@
 
 There are already great tools like https://github.com/IBM/openapi-validator and https://github.com/Redocly/openapi-cli, but I wanted a simple tool that only inspects for compliance with the spec.
 
+## Supported OpenAPI version
+
+v3.0, v3.1
+
 ## License
 
 Apache-2.0
