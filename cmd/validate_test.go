@@ -1,9 +1,15 @@
 package cmd
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestDetectVersion(t *testing.T) {
-	version, err := detectVersion("../test/non-oauth-scopes.json")
+	target, err := readFromFile("../test/non-oauth-scopes.json")
+	if err != nil {
+		t.Fatalf("failed test: %v", err)
+	}
+	version, err := detectVersion(target)
 	if err != nil {
 		t.Fatalf("failed test: %v", err)
 	}
