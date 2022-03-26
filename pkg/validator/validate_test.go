@@ -1,11 +1,11 @@
-package cmd
+package validator
 
 import (
 	"testing"
 )
 
 func TestDetectVersion(t *testing.T) {
-	target, err := readFromFile("../test/non-oauth-scopes.json")
+	target, err := readFromFile("../../test/non-oauth-scopes.json")
 	if err != nil {
 		t.Fatalf("failed test: %v", err)
 	}
